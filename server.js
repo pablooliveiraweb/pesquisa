@@ -21,7 +21,8 @@ const perguntas = [
     'Se as eleições Municipais fossem hoje qual seria a sua segunda opção de voto, caso o seu candidato não participasse?',
     'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Dr. Danilo vs Gabriel Ferrão)',
     'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Dr. Danilo vs Ivelony)',
-    'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Ivelony vs Gabriel Ferrão)'
+    'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Ivelony vs Gabriel Ferrão)',
+    'Se as eleições Municipais fossem hoje em quem você votaria para vereador?'
 ];
 
 // Configurar CORS para permitir requisições de http://localhost:3000

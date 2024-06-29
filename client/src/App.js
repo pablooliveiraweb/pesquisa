@@ -10,14 +10,16 @@ function App() {
     const [telefone, setTelefone] = useState('');
     const [respostas, setRespostas] = useState([]);
     const [etapa, setEtapa] = useState(0);
+    const [vereador, setVereador] = useState('');
 
     const perguntas = [
         'Se as eleições municipais fossem hoje em quem você votaria para Prefeito?',
         'Se as eleições municipais fossem hoje em quem você NÃO votaria de jeito nenhum para Prefeito?',
-        'Se as eleições Municipais fossem hoje qual seria a sua segunda opção de voto, caso o seu candidato não participasse?',
+        'Se as eleições municipais fossem hoje qual seria a sua segunda opção de voto, caso o seu candidato não participasse?',
         'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Dr. Danilo vs Gabriel Ferrão)',
         'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Dr. Danilo vs Ivelony)',
-        'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Ivelony vs Gabriel Ferrão)'
+        'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Ivelony vs Gabriel Ferrão)',
+        'Se as eleições municipais fossem hoje em quem você votaria para Vereador?'
     ];
 
     const opcoes = [
@@ -48,7 +50,7 @@ function App() {
                 cpf,
                 bairro,
                 telefone,
-                respostas
+                respostas: [...respostas, vereador]
             });
             alert(response.data.message);
             setNome('');
@@ -56,6 +58,7 @@ function App() {
             setBairro('');
             setTelefone('');
             setRespostas([]);
+            setVereador('');
             setEtapa(0);
         } catch (error) {
             console.error('Erro ao enviar voto:', error);
@@ -66,11 +69,11 @@ function App() {
 
     const handleNext = (resposta) => {
         setRespostas([...respostas, resposta]);
-        if (etapa === perguntas.length) {
-            handleSubmit();
-        } else {
-            setEtapa(etapa + 1);
-        }
+        setEtapa(etapa + 1);
+    };
+
+    const downloadRelatorio = () => {
+        window.open('http://localhost:5001/api/relatorio/pdf', '_blank');
     };
 
     return (
@@ -91,11 +94,23 @@ function App() {
                 <div className="container">
                     <h1>{perguntas[etapa - 1]}</h1>
                     <div className="options">
-                        {opcoes[etapa - 1].map((opcao, index) => (
-                            <button key={index} onClick={() => handleNext(opcao)}>
-                                {opcao}
-                            </button>
-                        ))}
+                        {etapa <= perguntas.length - 1 ? (
+                            opcoes[etapa - 1].map((opcao, index) => (
+                                <button key={index} onClick={() => handleNext(opcao)}>
+                                    {opcao}
+                                </button>
+                            ))
+                        ) : (
+                            <div>
+                                <input
+                                    type="text"
+                                    placeholder="Nome do Vereador"
+                                    value={vereador}
+                                    onChange={(e) => setVereador(e.target.value.toUpperCase())}
+                                />
+                                <button onClick={handleSubmit}>Enviar</button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
