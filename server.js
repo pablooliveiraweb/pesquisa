@@ -5,6 +5,7 @@ const pdfkit = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const puppeteer = require('puppeteer');
 
 // Configuração do banco de dados SQLite
 const db = new sqlite3.Database('./votos.db');
@@ -145,8 +146,8 @@ app.get('/api/relatorio', (req, res) => {
     });
 });
 
-app.get('/api/relatorio/pdf', (req, res) => {
-    db.all("SELECT * FROM votos", [], (err, rows) => {
+app.get('/api/relatorio/pdf', async (req, res) => {
+    db.all("SELECT * FROM votos", [], async (err, rows) => {
         if (err) {
             console.error('Erro ao gerar relatório:', err);
             return res.status(500).json({ message: 'Erro ao gerar relatório.' });
@@ -162,59 +163,79 @@ app.get('/api/relatorio/pdf', (req, res) => {
         const calcularPercentualPorPergunta = (indicePergunta) => {
             const contagem = votos.reduce((acc, voto) => {
                 const resposta = voto.respostas[indicePergunta];
-                if (!resposta) return acc; // Skip if the answer is not defined
+                if (!resposta) return acc;
                 if (!acc[resposta]) acc[resposta] = 0;
                 acc[resposta]++;
                 return acc;
             }, {});
-            
+
             return Object.keys(contagem).map(candidato => ({
                 candidato,
                 percentual: ((contagem[candidato] / totalVotos) * 100).toFixed(2)
             }));
         };
 
-        const doc = new pdfkit({ margin: 30 });
+        // Carregar dados para o HTML
+        const html = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Relatório de Votação</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; background-color: #f7f7f7; }
+                    .container { margin-top: 50px; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 80%; max-width: 800px; }
+                    h1 { font-size: 24px; margin-bottom: 20px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Relatório de Votação</h1>
+                    <h2>Total de Votos: ${totalVotos}</h2>
+                    ${perguntas.map((pergunta, indice) => `
+                        <h2>Pergunta ${indice + 1}: ${pergunta}</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Candidato</th>
+                                    <th>Percentual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${calcularPercentualPorPergunta(indice).map(({ candidato, percentual }) => `
+                                    <tr>
+                                        <td>${candidato}</td>
+                                        <td>${percentual}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `).join('')}
+                </div>
+            </body>
+            </html>
+        `;
 
-        doc.pipe(fs.createWriteStream('relatorio.pdf'));
-        doc.fontSize(18).text('Relatório de Votação', { align: 'center' });
-        doc.moveDown(2);
+        // Usar puppeteer para gerar o PDF a partir do HTML
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
 
-        // Total de Votos
-        doc.fontSize(14).text(`Total de Votos: ${totalVotos}`, { align: 'left' });
-        doc.moveDown();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
 
-        perguntas.forEach((pergunta, indice) => {
-            doc.fontSize(14).text(`Pergunta ${indice + 1}: ${pergunta}`, { align: 'left' });
-            doc.moveDown();
-            const percentuais = calcularPercentualPorPergunta(indice);
-
-            doc.fontSize(12);
-            doc.lineWidth(0.5);
-            doc.strokeColor('#000000');
-            doc.lineJoin('miter').rect(30, doc.y, doc.page.width - 60, 20).stroke();
-            doc.text('Candidato', 35, doc.y + 5);
-            doc.text('Percentual', 150, doc.y + 5);
-
-            percentuais.forEach(({ candidato, percentual }) => {
-                if (candidato) {
-                    doc.moveDown();
-                    doc.lineJoin('miter').rect(30, doc.y, doc.page.width - 60, 20).stroke();
-                    doc.text(candidato, 35, doc.y + 5);
-                    doc.text(`${percentual}%`, 150, doc.y + 5);
-                }
-            });
-
-            doc.moveDown(2);
+        const pdf = await page.pdf({
+            format: 'A4',
+            printBackground: true,
         });
 
-        doc.end();
+        await browser.close();
 
         res.setHeader('Content-disposition', 'attachment; filename=relatorio.pdf');
         res.setHeader('Content-type', 'application/pdf');
-
-        const filestream = fs.createReadStream('relatorio.pdf');
-        filestream.pipe(res);
+        res.send(pdf);
     });
 });
 
