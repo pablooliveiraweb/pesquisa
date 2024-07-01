@@ -87,6 +87,7 @@
         <div id="bairroRelatorio"></div>
         <h2>Relatório por Pergunta</h2>
         <div id="perguntaRelatorio"></div>
+        
         <button class="download-btn" onclick="baixarPDF()">Baixar Relatório em PDF</button>
     </div>
     <footer>
@@ -100,6 +101,7 @@
                 const relatorioBody = document.getElementById('relatorioBody');
                 const bairroRelatorio = document.getElementById('bairroRelatorio');
                 const perguntaRelatorio = document.getElementById('perguntaRelatorio');
+                const relatorioMudancaVoto = document.getElementById('relatorioMudancaVoto');
                 const totalVotosElement = document.getElementById('totalVotos');
 
                 // Exibir Total de Votos
@@ -190,6 +192,37 @@
                     perguntaContainer.appendChild(perguntaTable);
                     perguntaRelatorio.appendChild(perguntaContainer);
                 });
+
+                // Resultados da pergunta "Da data de hoje até o dia das eleições o seu voto pode mudar?"
+                const mudancaVotoData = data.relatorioPorPergunta.find(rp => rp.pergunta === "Da data de hoje até o dia das eleições o seu voto pode mudar?");
+                if (mudancaVotoData) {
+                    const mudancaVotoTable = document.createElement('table');
+                    const thead = document.createElement('thead');
+                    const theadRow = document.createElement('tr');
+                    const thCandidato = document.createElement('th');
+                    thCandidato.textContent = 'Resposta';
+                    const thPercentual = document.createElement('th');
+                    thPercentual.textContent = 'Percentual';
+                    theadRow.appendChild(thCandidato);
+                    theadRow.appendChild(thPercentual);
+                    thead.appendChild(theadRow);
+                    mudancaVotoTable.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    mudancaVotoData.percentuaisPorPergunta.forEach(({ candidato, percentual }) => {
+                        const row = document.createElement('tr');
+                        const candidatoCell = document.createElement('td');
+                        candidatoCell.textContent = candidato;
+                        const percentualCell = document.createElement('td');
+                        percentualCell.textContent = `${percentual}%`;
+                        row.appendChild(candidatoCell);
+                        row.appendChild(percentualCell);
+                        tbody.appendChild(row);
+                    });
+
+                    mudancaVotoTable.appendChild(tbody);
+                    relatorioMudancaVoto.appendChild(mudancaVotoTable);
+                }
 
             } catch (error) {
                 console.error('Erro ao carregar relatório:', error);

@@ -22,6 +22,7 @@ const perguntas = [
     'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Dr. Danilo vs Gabriel Ferrão)',
     'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Dr. Danilo vs Ivelony)',
     'Considerando apenas esses candidatos disputassem as eleições hoje, qual deles você votaria para Prefeito? (Ivelony vs Gabriel Ferrão)',
+    'Da data de hoje até o dia das eleições o seu voto pode mudar?',
     'Se as eleições Municipais fossem hoje em quem você votaria para vereador?'
 ];
 
